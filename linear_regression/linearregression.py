@@ -1,79 +1,57 @@
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+
+#-------------------------Loaiding_the_data-------------------------#
+df = pd.read_csv("Your path")
+x1=df["Feature"]
+y1=df["Target"]
 
 
 
+#-------------------------Ploting_the_fitted_line-------------------------#
 
-df=pd.read_csv("Your path")
-X=df.drop("Target",axis=1)
-y=df["Target"]
+colors = ['red', 'blue', 'green', 'orange', 'purple']
+color_index = 0
+
+def plot(m,b):
+
+    global color_index
+
+    plt.scatter(x=x1, y=y1, alpha=0.5, color="blue")
+    x_range = np.linspace(0, 10, 1000)  
+    line, = plt.plot(x1, m * x1 + b, color=colors[color_index], linewidth=5)
+    color_index = (color_index + 1) % len(colors)  
 
 
-
-def plot(w1,w2,b):
+    plt.xlabel("Feature (X)")
+    plt.ylabel("Target (y)")
+    plt.title("Linear Regression Fit")
+    plt.legend()
+    plt.pause(0.01)
+    line.remove()
     
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    x1_range = np.linspace(X.iloc[:, 0].min(), X.iloc[:, 0].max(), 50)
-    x2_range = np.linspace(X.iloc[:, 1].min(), X.iloc[:, 1].max(), 50)
-    X1_grid, X2_grid = np.meshgrid(x1_range, x2_range)
-    y_pred_grid = w1 * X1_grid + w2 * X2_grid + b  
 
-    ax.scatter(X.iloc[:, 0], X.iloc[:, 1], y, label="Actual Data", c='blue', marker='o')
+def gradient_descent(m,b,df,lr):
 
-    ax.plot_surface(X1_grid, X2_grid, y_pred_grid, color='red',
-                    alpha=0.5,label=f"w1 = {w1:.2f}\nw2 = {w2:.2f}\n b = {b:.2f}")
+    dm=0
+    db=0
+    n=len(df)
 
-    ax.set_xlabel("Feature 1")
-    ax.set_ylabel("Feature 2")
-    ax.set_zlabel("Target")
-    ax.set_title("3D Regression Plane for Linear Regression")
+    
+    dm += -(2/n) *np.dot(x1.T,y1-(m*x1+b))
+    db += -(2/n) * np.sum(y1-(m*x1+b))
 
-    ax.legend()
-    plt.draw()
-    plt.show()
+    m=m-lr*dm
+    b=b-lr*db
 
+    return m,b
 
+m=0
+b=0
+lr=0.01
+ephocs=1000
 
-
-class bgd:
-    def __init__(self, learning_rate=0.01, epochs=1000):
-
-        self.learning_rate = learning_rate
-        self.epochs = epochs
-        self.weights = None  
-        self.bias = 0  
-
-    def fit(self,X,y):
-
-        self.weights=np.zeros(X.shape[1])
-
-
-        for _ in range(self.epochs):
-
-            y_pred=np.dot(X,self.weights)+self.bias
-
-            dm=(-2/X.shape[0])*np.dot(X.T,(y-y_pred))
-            db=(-2/X.shape[0])*np.sum((y-y_pred))
-
-            self.weights=self.weights-self.learning_rate*dm
-            self.bias=self.bias-self.learning_rate*db
-
-
-
-    def predict(self,X):
-
-        return np.dot(X, self.weights) + self.bias
-
-
-
-
-model=bgd()
-model.fit(X,y)
-plot(model.weights[0],model.weights[1],model.bias)
-
-
-
-
+for _ in range(ephocs):
+    m,b=gradient_descent(m,b,df,lr)
+    plot(m,b)
